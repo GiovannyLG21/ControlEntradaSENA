@@ -44,7 +44,13 @@
 
 ## 📸 Vista previa
 
-![Control Entrada SENA Preview](./public/preview.png)
+![Control Entrada SENA Preview](./static/captures/01.%20Modules.jpeg)
+
+![Control Entrada SENA Preview](./static/captures/02.%20Scan.jpeg)
+
+![Control Entrada SENA Preview](./static/captures/06.%20Module%203.jpeg)
+
+![Control Entrada SENA Preview](./static/captures/09.%20Admin%20Panel.jpeg)
 
 ---
 
@@ -75,12 +81,14 @@ El proyecto estará disponible en:
 http://127.0.0.1:8000
 ```
 
-## Migraciones de la base de datos
+### Migraciones de la base de datos
 
 ```bash
 python manage.py makemigrations administrator
 python manage.py migrate
 ```
+
+---
 
 ## 📁 Estructura del proyecto
 
@@ -97,12 +105,18 @@ ControlEntradaSENA/
 └── requirements.txt  # Dependencias del proyecto
 ```
 
+---
+
 ## 👨‍💻 Autor
 
 Giovanny Ladino
 
 - GitHub: https://github.com/GiovannyLG21
 
+---
+
 ## 📄 Licencia
 
 Este proyecto está publicado bajo la licencia MIT.
+
+---
