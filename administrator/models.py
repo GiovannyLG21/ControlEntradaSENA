@@ -2,8 +2,7 @@
 # You'll have to do the following manually to clean this up:
 #   * Rearrange models' order
 #   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior#   * Remove `` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
@@ -12,8 +11,7 @@ class Centros(models.Model):
     idcentro = models.AutoField(db_column='IdCentro', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreCentro', unique=True, max_length=50)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'centros'
 
     def __str__(self):
@@ -28,8 +26,7 @@ class Dispositivos(models.Model):
     marca = models.ForeignKey('DispositivosMarca', models.DO_NOTHING, db_column='IdMarcaDispositivo')  # Field name made lowercase.    
     documento = models.FileField(db_column='DocumentoDispositivo', upload_to="docs/devices/", max_length=50, blank=True, null=True)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'dispositivos'
 
     def __str__(self):
@@ -38,11 +35,10 @@ class Dispositivos(models.Model):
 
 class DispositivosMarca(models.Model):
     idmarcadispositivo = models.AutoField(db_column='IdMarcaDispositivo', primary_key=True)  # Field name made lowercase.
-    nombre = models.CharField(db_column='NombreMarcaDispositivo', max_length=20, db_collation='utf8mb4_spanish_ci')  # Field name made lowercase.
+    nombre = models.CharField(db_column='NombreMarcaDispositivo', max_length=20)  # Field name made lowercase.
     tipo = models.ForeignKey('DispositivosTipo', models.DO_NOTHING, db_column='IdTipoDispositivo')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'dispositivos_marca'
 
     def __str__(self):
@@ -53,8 +49,7 @@ class DispositivosTipo(models.Model):
     idtipodispositivo = models.AutoField(db_column='IdTipoDispositivo', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreTipoDispositivo', unique=True, max_length=20)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'dispositivos_tipo'
 
     def __str__(self):
@@ -65,8 +60,7 @@ class DocumentoTipo(models.Model):
     idtipodocumento = models.AutoField(db_column='IdTipoDocumento', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreTipoDocumento', unique=False, max_length=30)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'documento_tipo'
 
     def __str__(self):
@@ -81,8 +75,7 @@ class Fichas(models.Model):
     numero = models.CharField(db_column='NumeroFicha', unique=True, max_length=10)  # Field name made lowercase.
     jornada = models.ForeignKey('Jornada', models.DO_NOTHING, db_column='IdJornada')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'fichas'
     
     def __str__(self):
@@ -93,8 +86,7 @@ class FichasNombre(models.Model):
     idfichanombre = models.AutoField(db_column='IdFichaNombre', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreFicha', unique=True, max_length=100)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'fichas_nombre'
 
     def __str__(self):
@@ -105,8 +97,7 @@ class FichasTipo(models.Model):
     idtipoficha = models.AutoField(db_column='IdTipoFicha', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreTipoFicha', unique=True, max_length=50)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'fichas_tipo'
 
     def __str__(self):
@@ -120,8 +111,7 @@ class Ingresos(models.Model):
     vehiculo = models.ForeignKey('Vehiculos', models.DO_NOTHING, db_column='IdVehiculo', blank=True, null=True)  # Field name made lowercase.    
     horaingreso = models.TimeField(db_column='HoraIngreso')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'ingresos'
 
 
@@ -130,8 +120,7 @@ class IngresosDispositivos(models.Model):
     ingreso = models.ForeignKey(Ingresos, models.DO_NOTHING, db_column='IdIngreso')  # Field name made lowercase.
     dispositivo = models.ForeignKey(Dispositivos, models.DO_NOTHING, db_column='IdDispositivo')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'ingresos_dispositivos'
 
 
@@ -142,8 +131,7 @@ class Salidas(models.Model):
     vehiculo = models.ForeignKey('Vehiculos', models.DO_NOTHING, db_column='IdVehiculo', blank=True, null=True)  # Field name made lowercase.    
     horasalida = models.TimeField(db_column='HoraSalida')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'salidas'
 
 
@@ -152,8 +140,7 @@ class SalidasDispositivos(models.Model):
     salida = models.ForeignKey(Salidas, models.DO_NOTHING, db_column='IdSalida')  # Field name made lowercase.
     dispositivo = models.ForeignKey(Dispositivos, models.DO_NOTHING, db_column='IdDispositivo')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'salidas_dispositivos'
 
 
@@ -161,8 +148,7 @@ class Jornada(models.Model):
     idjornada = models.AutoField(db_column='IdJornada', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreJornada', unique=True, max_length=10)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'jornada'
 
     def __str__(self):
@@ -174,8 +160,7 @@ class Roles(models.Model):
     nombre = models.CharField(db_column='NombreRol', unique=True, max_length=20)  # Field name made lowercase.
     descripcion = models.TextField(db_column='DescripcionRol')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'roles'
 
     def __str__(self):
@@ -193,8 +178,7 @@ class Usuarios(models.Model):
     centro = models.ForeignKey(Centros, models.DO_NOTHING, db_column='IdCentro', blank=True, null=True, default=None)  # Field name made lowercase.
     rol = models.ForeignKey(Roles, models.DO_NOTHING, db_column='IdRol')  # Field name made lowercase.
     ficha = models.ForeignKey(Fichas, models.DO_NOTHING, db_column='IdFicha', blank=True, null=True, default=None)  # Field name made lowercase.    
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'usuarios'
 
     def __str__(self):
@@ -209,8 +193,7 @@ class Vehiculos(models.Model):
     marca = models.ForeignKey('VehiculosMarca', models.DO_NOTHING, db_column='IdMarcaVehiculo')  # Field name made lowercase.
     modelo = models.CharField(db_column='ModeloVehiculo', null=True, blank=True, max_length=4, default=None)  # Field name made lowercase. This field type is a guess.    
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'vehiculos'
 
     def __str__(self):
@@ -222,8 +205,7 @@ class VehiculosMarca(models.Model):
     nombre = models.CharField(db_column='NombreMarcaVehiculo', max_length=20)  # Field name made lowercase.
     tipo = models.ForeignKey('VehiculosTipo', models.DO_NOTHING, db_column='IdTipoVehiculo')  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'vehiculos_marca'
 
     def __str__(self):
@@ -234,8 +216,7 @@ class VehiculosTipo(models.Model):
     idtipovehiculo = models.AutoField(db_column='IdTipoVehiculo', primary_key=True)  # Field name made lowercase.
     nombre = models.CharField(db_column='NombreTipoVehiculo', unique=True, max_length=20)  # Field name made lowercase.
 
-    class Meta:
-        managed = False
+    class Meta:        
         db_table = 'vehiculos_tipo'
 
     def __str__(self):
