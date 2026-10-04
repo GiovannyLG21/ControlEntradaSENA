@@ -1,0 +1,79 @@
+{% extends 'layouts/admin_base_access.html' %}
+{% load static %}
+
+{% block title %} {{title}} {% endblock %}
+
+{% block card_title %} {{title}} {% endblock %}
+
+{% block card_table %}
+
+  <!-- Botones para cambio de tablas -->
+  <div class="btn-change-table">
+    <button type="button" class="btn btn-green2 btn-green2" data-table="1">Ingresos activos</button>    
+    <button type="button" class="btn btn-green2 btn-green2-active" data-table="2">Ingresos y salidas</button>    
+  </div>
+
+<!-- Tablas  -->
+<div class="table-container {% if not search_access %}d-none{% endif %}">
+  <div class="table-scroll">
+    <table class="table table-striped" data-table="1">
+      <thead>
+        <tr>
+          <th scope="col">Id</th> 
+          <th scope="col">Fecha</th>
+          <th scope="col">Usuario</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Vehículo</th>
+          <th scope="col">Dispositivo</th>
+          <th scope="col">Hora ingreso</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody class="tbody">
+        <!-- Traer datos de la tabla -->
+        {% include 'layouts/components/TableContent.html' with search=search_access items=access include='pages/ingresos/table/Access.html'%}                
+      </tbody>
+    </table>
+  </div>
+  {% if not search_access %}
+    <!-- Paginacion de la tabla -->
+    {% include 'layouts/components/Pagination.html' with pagination=access name="access"%}
+  {% else %}
+    {% include 'layouts/components/Pagination.html' with pagination=search_access name="access-search" %} 
+  {% endif %}
+</div>
+
+<div class="table-container {% if search_access %}d-none{% endif %}">
+  <div class="table-scroll">
+    <table class="table table-striped" data-table="2">
+      <thead>
+        <tr>
+          <th scope="col">Id</th> 
+          <th scope="col">Fecha</th>
+          <th scope="col">IdIngreso</th>
+          <th scope="col">Usuario</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Vehiculo</th>
+          <th scope="col">Dispositivos</th>
+          <th scope="col">Hora ingreso</th>
+          <th scope="col">Hora salida</th>
+        </tr>
+      </thead>
+      <tbody class="tbody">
+        {% include 'layouts/components/TableContent.html' with search=search_exit items=exits include='pages/ingresos/table/Exits.html'%}
+      </tbody>
+    </table>
+  </div>
+  {% if not search_exit %}
+    {% include 'layouts/components/Pagination.html' with pagination=exits name="exits"%}
+  {% else %}
+    {% include 'layouts/components/Pagination.html' with pagination=search_exit name="exit-search" %}
+  {% endif %}
+</div>
+
+<!-- Modales para mostrar dispositivos -->
+{% include 'layouts/components/ElementsModal.html' with class="access-devices" id="accessDevicesModal" title="Dispositivos" cardName1="Dispositivos de ingreso" cardClass1="access" cardImg1="/static/assets/icons/log-in-green.png" %}
+{% include 'layouts/components/ElementsModal.html' with class="exit-devices" id="exitDevicesModal" title="Dispositivos" cardName1="Dispositivos de ingreso" cardClass1="access" card2="true" cardName2="Dispositivos de salida" cardClass2="exit" cardImg1="/static/assets/icons/log-in-green.png" cardImg2="/static/assets/icons/log-in-green.png" %}
+
+
+{% endblock %}

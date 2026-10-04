@@ -1,0 +1,43 @@
+{% load static %}
+<div class="col">
+    <img src="{% static 'assets/icons/devices2.png' %}">
+    <label for="names">Dispositivos</label>  
+    <!-- Zona select -->                           
+    <div class="select-form device">
+        <!-- Select -->
+         <div class="select-btn open">           
+            <span class="btn-text">Seleccionar Dispositivos</span>            
+            <span class="arrow-dwn">
+                <i class="fa-solid fa-chevron-down"></i>
+            </span>
+        </div>      
+        <!-- Lista -->                  
+        <ul class="list-items">            
+            {% comment %} Si esta ingresando {% endcomment %}
+            {% if dispositivos and not ingreso %}
+                {% for dispositivo in dispositivos %}
+                       <!-- Item -->
+                       <li class="item item-device" value="{{dispositivo.iddispositivo}}">
+                           <span class="checkbox">
+                               <i class="fa-solid fa-check check-icon"></i>
+                           </span>
+                           <span class="item-text">{{dispositivo}}</span>
+                       </li>
+                {% endfor %}
+            {% comment %} Si esta saliendo y tiene dispositivo {% endcomment %}
+            {% elif ingreso and dispositivos_ingreso %}
+                {% for dispositivo_ingreso in dispositivos_ingreso %}
+                    <!-- Item -->
+                    <li class="item item-device" value="{{dispositivo_ingreso.dispositivo.iddispositivo}}">
+                        <span class="checkbox">
+                            <i class="fa-solid fa-check check-icon"></i>
+                        </span>
+                        <span class="item-text">{{dispositivo_ingreso.dispositivo}}</span>                        
+                    </li>   
+                {% endfor %}
+            {% else %}
+                <span class="item-text">Ningún dispositivo registrado</span>
+            {% endif %}                                       
+        </ul>
+    </div>                                             
+</div>

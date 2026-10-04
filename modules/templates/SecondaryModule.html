@@ -1,0 +1,64 @@
+{% extends 'layouts/layout.html'%}
+{% load static %}
+
+{% block title %} {{title}} {% endblock %}
+
+{% block content %}
+
+{% if not users %}
+<article id="ingreso" class="card-scan">
+    <!-- Alerta  -->
+    {% include 'layouts/components/Alert.html' %}
+    <!-- Card escaneo -->
+    {% include 'layouts/components/CardScan.html' with method="get" %}
+</article>
+
+{% else %}
+<article id="module2" class="card-select-elements module-selects">
+    <!-- Input oculto con el documento del usuario-->
+    {% include 'layouts/components/User.html' %}
+    <header>
+        <h1 class="header-title">
+            {% if not ingreso %}
+                Ingreso
+            {% else %}
+                 Salida
+            {% endif %}
+        </h1>        
+    </header>
+    <!-- Alerta  -->
+    {% include 'layouts/components/Alert.html' %}
+    <section class="card">
+        <header class="card-header">   
+            <!-- Boton atras -->         
+            {% include 'layouts/components/BackButton.html'%}
+            <h1 class="card-title">{{users}}</h1>
+            <!-- Boton de registro de dispositivos -->
+            {% include 'layouts/components/ButtonsRegisterDevice.html'%}
+        </header>
+        <div class="card-body"> 
+            <!-- Seleccionar dispositivos -->
+            <div class="row w-100 select">
+                <!-- Dispositivos -->
+                {% include 'layouts/components/SelectDevices.html' %}
+            </div>      
+        </div>
+        <footer class="card-footer">
+            <div class="row w-100 text-center">
+                <!-- Boton ingresar y form para enviar el vehiculo y los dispositivos --> 
+                <div class="col-lg col-md col-sm col-xs-12 ">
+                    <!-- Input para comprobar dispositivo -->
+                    {% include 'layouts/components/CompSelectDevice.html'%}
+                    <form id="form-access" class="form-module2" method="post">
+                        {% csrf_token %}
+                        <input id="devices" type="hidden" name="devices" value="">                             
+                        <button type="submit" class="btn accept">{% if ingreso %}Salir{% else %}Ingresar{% endif %}</button>
+                    </form> 
+                </div>                          
+            </div>
+        </footer>
+    </section>
+</article>
+{% endif %}
+
+{% endblock %}

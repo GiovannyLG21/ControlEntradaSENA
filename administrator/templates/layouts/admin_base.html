@@ -1,0 +1,55 @@
+{% extends 'layouts/layout.html' %}
+{% load static %}
+
+{% block content %}
+
+<article id="admin">
+  <!-- Card general -->
+  <section class="card">
+    <!-- Card MAIN -->
+    <section class="card-main">
+      <header class="card-header">  
+        <!-- Btn Descargar Reporte -->    
+        <a role="button" href="{% block report %}{% endblock %}" class="btn btn-green report"> 
+          <img src="{% static 'assets/icons/excel.png' %}" width="25" alt="">
+          <span>Reporte General</span>
+        </a>
+        <h1 class="card-title">{% block card_title %}{% endblock %}</h1>
+        <!-- Btn Registrar -->
+        {% block card_register_btn %}
+        {% endblock %}               
+      </header>
+      <!-- Seccion Search -->
+      {% include 'layouts/components/Search.html' %}
+      <!-- Mensajes -->
+      {% include 'layouts/components/Messages.html' %}
+      <div class="card-body">
+        <!-- Card Tabla-->
+        <div class="card card-table">  
+          {% block card_table %}                       
+            
+          {% endblock %}  
+        </div>
+      </div> 
+    </section>
+
+    <!-- Modal -->
+    {% block Modal %}
+    
+    {% endblock %}
+
+    <!-- Card REGISTER -->
+    <section class="card-register card-select">
+    {% block card_register %}
+
+    {% endblock %}
+    </section>
+  </section>
+</article>
+
+{% endblock %}
+
+
+
+  
+  

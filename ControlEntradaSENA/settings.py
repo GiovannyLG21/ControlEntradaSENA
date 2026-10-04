@@ -40,11 +40,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.core.files.storage",
+    "rest_framework",
+    "api",
     "mainapp",
-    "administrator"
+    "modules",
+    "administrator",
 ]
-VERSION = "Control Entrada Sena V2.0"
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -83,15 +89,8 @@ WSGI_APPLICATION = "ControlEntradaSENA.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get('DB_NAME'),
-        "USER": os.environ.get('DB_USER'),
-        "PASSWORD": os.environ.get('DB_PASS'),
-        "HOST": "mysql-giovanny.alwaysdata.net",
-        "PORT": "3306",
-        "OPTIONS": {
-            'sql_mode': 'STRICT_TRANS_TABLES'
-            }
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 

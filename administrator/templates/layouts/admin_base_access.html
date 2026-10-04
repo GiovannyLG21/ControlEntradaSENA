@@ -1,0 +1,32 @@
+{% extends 'layouts/layout.html' %}
+{% load static %}
+
+{% block content %}
+
+<article id="admin">
+    <!-- Card general -->
+  <section class="card">
+    <header class="card-header access">  
+      <!-- Btn Descargar Reporte -->    
+      <a role="button" href="{% url 'reports' model="ingresos" %}" class="btn btn-green report access"> 
+        <img src="{% static 'assets/icons/excel.png' %}" width="25" alt="">
+        Descargar Reporte
+      </a>
+      <h1 class="card-title">{% block card_title %}{% endblock %}</h1>                      
+    </header>
+        <!-- Seccion Search -->
+        {% include 'layouts/components/Search.html'%}
+        <!-- Mensajes -->
+        {% include 'layouts/components/Messages.html' %}
+        <div class="card-body">
+          <!-- Card Tabla-->
+          <div class="card card-table">  
+            {% block card_table %}                       
+              
+            {% endblock %}  
+          </div>
+        </div> 
+  </section>
+</article>
+
+{% endblock %}

@@ -1,286 +1,189 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
-from django.core.serializers import serialize
-import json
-from django.http import HttpResponse
-from django.contrib import messages
-from django.http import Http404
-from django.db.models import Subquery
 from administrator.models import *
 from administrator.forms import *
-from datetime import datetime #Fecha y hora
-from openpyxl import Workbook #Generar archivos excel
-from io import BytesIO
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from django.contrib import messages
+from django.http import JsonResponse
 
+#Funcion para redirigir despues de un registro / Capturar url actual
+def actualUrl(request):
+    url = request.get_full_path()
+    request.session['url'] = url
+    return url
 
-#Inicio
-def index(request):
-    # sourcery skip: extract-method, use-fstring-for-concatenation
+#Recuperar Url ya guardada
+def savedUrl(request):
+    url = request.session.get('url')
+    return url
 
-    #Traer los ingresos que no estan relacionados con una salida
-    ingresos = Ingresos.objects.exclude(idingreso__in=Subquery(Salidas.objects.values('ingreso'))) or None 
-    #Traer salidas
-    salidas = Salidas.objects.all
-    #Recibir codigo por GET
-    if 'code' in request.GET:
-        code = request.GET.get('code')
+#Funcion para traer datos del usuario
+def getUser(code, module):
+    #Usuario
+    user = get_object_or_404(Usuarios, documento=code) 
+    vehiculos = Vehiculos.objects.filter(usuario=user.idusuario)
+    dispositivos = Dispositivos.objects.filter(usuario=user.idusuario)    
+    #Si el usuario tiene un ingreso activo
+    ingreso = Ingresos.objects.filter(usuario=user.idusuario).exclude(idingreso__in=Salidas.objects.values('ingreso')) or None    
+    ingreso = ingreso[0] if ingreso else None
+    #Dispositivos con los que ingreso el usuario
+    dispositivos_ingreso = IngresosDispositivos.objects.filter(ingreso=ingreso.idingreso) if ingreso else None
 
-        #Si el usuario esta registrado
-        try:
-            #Buscar usuario por su documento
-            user = get_object_or_404(Usuarios, documento=code) 
+    #Dependiendo del modulo retornar
+    if module == 1:
+        return ingreso, user
+    elif module == 2:
+        return ingreso, user, dispositivos, dispositivos_ingreso
+    elif module == 3:
+        return ingreso, user, vehiculos, dispositivos, dispositivos_ingreso
 
-            #Traer todos los datos del usuario
-            vehiculos = Vehiculos.objects.filter(usuario=user.idusuario)
-            dispositivos = Dispositivos.objects.filter(usuario=user.idusuario)
-            rol = user.rol
-            DocType = user.tipodocumento 
-            centro = user.centro or None
-            ficha = user.ficha or None
-            FichaName = ficha.nombre if ficha else None
-            jornada = ficha.jornada if ficha else None
-            
-            #Si el usuario toma su foto: Guardarla
-            if request.method == 'POST':   
-                user.imagen.delete()
-                imagen = request.FILES['imagen']
-                extension = imagen.name.split('.')[-1].lower()
-                filename = f"{code}.{extension}"
-                imagen.name = filename                        
-                user.imagen = imagen
-                user.save()
-                return redirect(f"/?code={code}")
-                                
-            #Si el usuario tiene un ingreso activo, hacer salida
-            salida = Ingresos.objects.filter(usuario=user.idusuario).exclude(idingreso__in=Salidas.objects.values('ingreso')).first() or None
-            dispositivo_salida = Dispositivos.objects.filter(usuario=user.idusuario, documento__isnull=False).first()
-
-            return render(request, 'index.html',{
-                #Para ingreso
-                'title': user,          
-                'users': user,                
-                'DocType': DocType,
-                'centro': centro,
-                'rol': rol,
-                'ficha': ficha,
-                'FichaName': FichaName,
-                'jornada': jornada,
-                'vehiculos': vehiculos,
-                'dispositivos': dispositivos,
-                #Para salida
-                'salida': salida,
-                'dispositivo_salida': dispositivo_salida,
-                })
-        #Si el usuario no existe
-        except Http404:
-            return redirect('registeruser', code=code)
-    
-    return render(request, 'index.html', {
-        'title': 'Inicio',
-        'ingresos': ingresos,
-        'salidas': salidas
-    })
-
-#Reporte en excel: Tabla ingresos y salidas
-def reportAccess(request):
-
-    #Tabla
-    datos = Salidas.objects.all()
-
-    #Crear libro
-    wb = Workbook()    
-
-    #Crear hoja para tabla "ingresos"
-    ws_ingresos = wb.active
-    ws_ingresos.title = "Ingresos"
-    ws_ingresos.append(["IdIngreso", "Fecha", "Usuario", "Rol", "Centro", "Vehiculo", "Dispositivo_Ingreso", "Dispositivo_Salida", "Hora de ingreso", "Hora de Salida"])
-    header_cells = ws_ingresos["A1:J1"]
-    
-    #Diseño de celdas
-    bold_font = Font(bold=True)
-    center_alignment = Alignment(horizontal="center", vertical="center")
-    header_fill = PatternFill(start_color="C0C0C0", end_color="C0C0C0", fill_type="solid")
-    thin_border = Border(left=Side(style="thin"), 
-                         right=Side(style="thin"), 
-                         top=Side(style="thin"), 
-                         bottom=Side(style="thin"))
-
-    #Establecer diseño de encabezado
-    for row in header_cells:
-        for cell in row:
-            cell.font = bold_font
-            cell.alignment = center_alignment
-            cell.fill = header_fill
-            cell.border = thin_border
-
-    
-    
-    # Establecer alineacion de celdas
-    for row in ws_ingresos.iter_rows(min_row=2):
-        for cell in row:
-            cell.alignment = center_alignment
-            if cell.value:                
-                cell.border = thin_border
-
-    # Establecer ancho de columnas
-    column_width = 30
-    for column in ws_ingresos.columns:
-        ws_ingresos.column_dimensions[column[0].column_letter].width = column_width
-
-    #Llenar tabla "salidas"
-    for dato in datos:
-        if dato.ingreso:
-            ws_ingresos.append([dato.ingreso.idingreso,
-                               dato.fecha, 
-                               f"{dato.ingreso.usuario.nombres} {dato.ingreso.usuario.apellidos}", 
-                               dato.ingreso.usuario.rol.nombre,
-                               dato.ingreso.usuario.centro.nombre,
-                               f"{dato.vehiculo.tipo.nombre} {dato.vehiculo.marca.nombre}: {dato.vehiculo.placa}" if dato.vehiculo else "Ninguno",
-                               f"{dato.ingreso.dispositivo.tipo.nombre} {dato.ingreso.dispositivo.marca.nombre}: {dato.ingreso.dispositivo.sn}" if dato.ingreso.dispositivo else "Ninguno",
-                               f"{dato.dispositivo.tipo.nombre} {dato.dispositivo.marca.nombre}: {dato.dispositivo.sn}" if dato.dispositivo else "Ninguno",
-                               dato.ingreso.horaingreso,
-                               dato.horasalida])
-
-    # Crear un objeto BytesIO para guardar el archivo en memoria
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
-
-    # Configurar la respuesta HTTP para descargar el archivo
-    response = HttpResponse(output.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = "attachment; filename=Reporte Ingresos - ControlEntradaSENA V1.3.0.xlsx"
-
-    return response
-
-#Ingreso y salida
-def access(request, code):
-    #Fecha y hora actuales
+#Funcion para ingresos o salidas
+def AccessOrExit(request, ingreso, user, vehiculo, dispositivos):
     date = datetime.now().strftime("%Y-%m-%d")
     hour = datetime.now().strftime("%H:%M:%S")
 
-    
-    
-    #Vehiculo elegido
-    idvehiculo = request.GET.get('vehicle')
-    vehiculo = Vehiculos.objects.get(idvehiculo=idvehiculo) if idvehiculo else None
-
-    #Dispositivo elegido
-    iddispositivo = request.GET.get('devices')
-    iddispositivo = iddispositivo.split(',')
-
-    
-    dispositivo = Dispositivos.objects.get(iddispositivo=iddispositivo[0]) if len(iddispositivo) > 0 and iddispositivo[0] else None
-    dispositivo2 = Dispositivos.objects.get(iddispositivo=iddispositivo[1]) if len(iddispositivo) > 1 and iddispositivo[1] else None
-    dispositivo3 = Dispositivos.objects.get(iddispositivo=iddispositivo[2]) if len(iddispositivo) > 2 and iddispositivo[2] else None
-      
-    users = get_object_or_404(Usuarios, documento=code)
-    
-    
-
-    ingreso = Ingresos.objects.filter(usuario=users.idusuario).exclude(idingreso__in=Salidas.objects.values('ingreso')).first() or None
-    
     #Si el usuario ha ingresado: Hacer salida
     if ingreso:
-        salida = Salidas.objects.create(fecha=date, ingreso=ingreso, vehiculo=vehiculo, dispositivo=dispositivo, dispositivo2=dispositivo2, dispositivo3=dispositivo3, horasalida=hour)
+        salida = Salidas.objects.create(fecha=date, ingreso=ingreso, vehiculo=vehiculo, horasalida=hour)        
+        if dispositivos:
+            #Para cada dispositivo seleccionado, crear un registro en la tabla SalidasDispositivos
+            for dispositivo in dispositivos:
+                SalidasDispositivos.objects.create(salida=salida, dispositivo=dispositivo)
         status = "Salida"
+        messages.success(request, "success-exit")
+
     #Si el usuario no ha ingresado: Hacer ingreso
     else:
-        #Crear ingreso
-        ingreso = Ingresos.objects.create(fecha=date, usuario=users, vehiculo=vehiculo, dispositivo=dispositivo, dispositivo2=dispositivo2, dispositivo3=dispositivo3, horaingreso=hour)
+        ingreso = Ingresos.objects.create(fecha=date, usuario=user, vehiculo=vehiculo, horaingreso=hour)
+        if dispositivos:
+            #Para cada dispositivo seleccionado, crear un registro en la tabla IngresosDispositivos
+            for dispositivo in dispositivos:            
+                IngresosDispositivos.objects.create(ingreso=ingreso, dispositivo=dispositivo)
         status = "Ingreso"
+        messages.success(request, "success-access")
+    
+#
+def compPrevAccess(request, ingreso, module):
+    if not ingreso: return
+    message = None
+    compDevice = IngresosDispositivos.objects.filter(ingreso=ingreso.idingreso) or None
+    compVehicle = ingreso.vehiculo or None
+    if not compDevice and not compVehicle and module != 1:
+        message = "error-module1"
+    elif compDevice and not compVehicle and module != 2:
+        message = "error-module2"
+    elif compDevice and compVehicle and module != 3:
+        message = "error-module3"
+    if message:    
+        messages.error(request, message) if message else None
+        raise ValueError(message)
 
-    return render(request, 'access.html',{
-        'title': f'{status} usuario',
-        'users': users,
-        'ingreso': ingreso,
-        'status': status
+#Funcion para validar que el dispositivo coincida con uno registrado o uno ingresado 
+def compDevice(device, type, ingreso, user):      
+        try:
+            #Tipo 1: Validar que el dispositivo este registrado
+            if type == 1:
+                device = Dispositivos.objects.get(usuario=user, sn=device.upper())
+                message = "El dispositivo esta registrado" if device else "El dispositivo no esta registrado"
+            #Tipo 2: Validar que el dispositivo este ingresado
+            elif type == 2: 
+                device = Dispositivos.objects.get(sn=device.upper())
+                exit_device = IngresosDispositivos.objects.get(ingreso=ingreso.idingreso, dispositivo=device)
+                message = "El dispositivo coincide" if exit_device else "El dispositivo no coincide"
+            return JsonResponse({'response': {'status': 'success', 'message': message, 'device':{'id': device.iddispositivo, 'user': device.usuario.nombres, 'type': device.tipo.nombre, 'mark': device.marca.nombre, 'sn': device.sn}}})            
+        except:                
+            return JsonResponse({'response': {'status': 'error', 'message': 'El dispositivo no existe'}})
+    
+#===================================================================================================
+
+#Inicio
+def index(request):
+    return render(request, "index.html", {
+        'title': 'Inicio',
     })
-
 
 #Registrar usuario
 def registeruser(request, code):
-    roles = Roles.objects.all()
-    rol = request.GET.get('rol') #Obtener rol a registrar por GET
+        
+    rol = request.GET.get('rol') #Obtener rol a registrar por GET    
+    rol_selected = Roles.objects.get(idrol=rol) if rol else None #Rol seleccionado
     initial_data = {'rol': rol, 'documento': code} #Dato predeterminado del rol y documento
-    form = RegisterUser(request.POST or None, request.FILES or None, initial=initial_data)
+    form = RegisterUser(request.POST or None, initial=initial_data)
 
     #Requerir o no campos de formulario segun el rol
     form.fields['centro'].required = rol != "3"
-    form.fields['ficha'].required = rol == "2"
+    form.fields['ficha'].required = rol == "2"    
 
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.info(request, "success-user")
-        return redirect('index')
+        url = savedUrl(request)
+        return redirect(url)
 
     return render(request, 'register/registeruser.html', {
         'title': 'Registrar usuario',
         'rol': rol,
-        'roles': roles,
+        'rol_selected': rol_selected,
         'form': form
     })
 
+#===================================================================================================
 
 #Registrar vehiculo
 def registervehicle(request, code):
-    users = Usuarios.objects.get(documento=code)
-    #Tipo vehiculo
-    vehicle = request.GET.get('vehicle')
-
-    # if vehicle:
-    #     options = VehiculosMarca.objects.filter(tipo=vehicle)
-    #     options_list = [{'id': option.idmarcavehiculo, 'marca': option.nombre} for option in options]
-    #     return JsonResponse({'options': options_list})
-
-    #Tipo vehiculo y usuario predeterminados
-    initial_data = {'tipo': vehicle, 'usuario': users.idusuario}
-
+    print(savedUrl(request))
+    users = Usuarios.objects.get(documento=code) #usuario    
+    vehicle = request.GET.get('vehicle') #Tipo de vehiculo
+    vehicle_selected = VehiculosTipo.objects.get(idtipovehiculo=vehicle) if vehicle else None #Tipo de vehiculo seleccionado
+    type = request.GET.get('type') #Enviar a url el tipo de vehiculo seleccionado    
+    initial_data = {'tipo': vehicle, 'usuario': users.idusuario} #Tipo vehiculo y usuario predeterminados
     form = RegisterVehicle(request.POST or None, request.FILES or None, initial=initial_data)
+    
+    #Si se selecciona un tipo de vehiculo, traer las marcas de ese tipo
+    if type:
+        options = VehiculosMarca.objects.filter(tipo=type)        
+        options_list = [{'id': option.idmarcavehiculo, 'marca': option.nombre} for option in options]        
+        return JsonResponse({'options': options_list})
 
+    #Requerir o no campos de formulario segun el tipo de vehiculo
     form.fields['placa'].required = vehicle != "3"
     form.fields['modelo'].required = vehicle != "3"
 
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        form.save()        
         messages.info(request, "success-vehicle")
-        return redirect(f'/?code={code}')
+        url = savedUrl(request)
+        return redirect(url)
 
     return render(request, 'register/registervehicle.html',{
         'title': 'Registrar Vehiculo',
         'vehicle': vehicle,
+        'vehicle_selected': vehicle_selected,
         'form': form,
         'users': users
     })
 
+#===================================================================================================
+
 #Registrar dispositivo
 def registerdevice(request, code):
-    doc = request.GET.get('doc')
-    users = Usuarios.objects.get(documento=code)
-    
-    selectedType = request.GET.get("selectedType")
+
+    users = Usuarios.objects.get(documento=code) #usuario    
+    selectedType = request.GET.get("selectedType") #Tipo de dispositivo seleccionado
+    initial_data = {'usuario': users.idusuario}
+    form = RegisterDevice(request.POST or None, request.FILES or None, initial=initial_data)
+
+    #Si se selecciona un tipo de dispositivo, traer las marcas de ese tipo
     if selectedType:
         options = DispositivosMarca.objects.filter(tipo=selectedType)   
         option_list = [{'id': option.idmarcadispositivo, 'marca': option.nombre} for option in options]
         return JsonResponse({'options': option_list})
     
-    
-    initial_data = {'usuario': users.idusuario}
-    form = RegisterDevice(request.POST or None, request.FILES or None, initial=initial_data)
-    form.fields['documento'].required = bool(doc)
-    
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.info(request, "success-device")
-        return redirect(f'/?code={code}')
+        url = savedUrl(request)
+        return redirect(url)
 
     return render(request, 'register/registerdevice.html',{
         'title': 'Registrar Dispositivo',
-        'form': form,
-        'doc': doc
+        'form': form
     })
-
-
-
-
-
